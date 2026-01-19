@@ -19,6 +19,7 @@ public class FareSystemAddon implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
+		ItemRegistry.registerAll();
 		LOGGER.info("Hello Fabric world!");
 	}
 }
