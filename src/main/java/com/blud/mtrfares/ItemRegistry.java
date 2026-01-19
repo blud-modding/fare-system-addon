@@ -11,7 +11,7 @@ import net.minecraft.registry.Registry;
 
 public final class ItemRegistry {
     public static final Item SINGLE_USE_TICKET = new SingleUseTicketItem(new Item.Settings().maxCount(1));
-    public static final Item SPECIAL_TICKET = new SpecialTicketItem(new Item.Settings());
+    public static final Item SPECIAL_TICKET = new SpecialTicketItem(new Item.Settings().maxCount(1));
 
     public static void registerAll() {
         Registry.register(Registries.ITEM, new Identifier(FareSystemAddon.MOD_ID, "single_use_ticket"), SINGLE_USE_TICKET);
