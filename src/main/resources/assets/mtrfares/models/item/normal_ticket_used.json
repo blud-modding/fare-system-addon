@@ -1,0 +1,12 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mtrfares:item/normal_ticket"
+  },
+  "overrides": [
+    {
+      "predicate": { "mtrfares_used": 1.0 },
+      "model": "mtrfares:item/normal_ticket_used"
+    }
+  ]
+}
