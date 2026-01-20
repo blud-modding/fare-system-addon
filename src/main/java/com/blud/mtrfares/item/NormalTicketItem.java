@@ -12,17 +12,19 @@ import java.util.List;
 
 public class NormalTicketItem extends Item {
     // NBT keys
-    private static final String KEY_USED = "mtrfares_used"; // optional
+    private static final String KEY_USED = "mtrfares_used"; // optional, still available if you want it
     private static final String KEY_ZONES = "mtrfares_zones";
     private static final String KEY_CLASS = "mtrfares_class";
     private static final String KEY_PURCHASE = "mtrfares_purchase_ts"; // epoch seconds (long)
     private static final String KEY_VALID_MIN = "mtrfares_valid_minutes"; // validity duration in minutes (long)
+    private static final String KEY_USE_COUNT = "mtrfares_use_count"; // number of times used
+    private static final String KEY_MAX_USES = "mtrfares_max_uses"; // optional maximum uses
 
     public NormalTicketItem(Settings settings) {
         super(settings);
     }
 
-    // Used flag helpers
+    // Used flag helpers (optional)
     public static void markUsed(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return;
         NbtCompound tag = stack.getOrCreateNbt();
@@ -39,6 +41,41 @@ public class NormalTicketItem extends Item {
     public static boolean isUsed(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return false;
         return stack.hasNbt() && stack.getNbt().contains(KEY_USED) && stack.getNbt().getBoolean(KEY_USED);
+    }
+
+    // Use counter helpers
+    public static long getUseCount(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return 0L;
+        return stack.hasNbt() ? stack.getNbt().getLong(KEY_USE_COUNT) : 0L;
+    }
+
+    public static void setUseCount(ItemStack stack, long count) {
+        if (stack == null || stack.isEmpty()) return;
+        stack.getOrCreateNbt().putLong(KEY_USE_COUNT, Math.max(0, count));
+    }
+
+    public static void incrementUseCount(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return;
+        NbtCompound tag = stack.getOrCreateNbt();
+        long current = tag.contains(KEY_USE_COUNT) ? tag.getLong(KEY_USE_COUNT) : 0L;
+        tag.putLong(KEY_USE_COUNT, current + 1L);
+    }
+
+    // Optional max uses helpers
+    public static void setMaxUses(ItemStack stack, long maxUses) {
+        if (stack == null || stack.isEmpty()) return;
+        stack.getOrCreateNbt().putLong(KEY_MAX_USES, Math.max(0, maxUses));
+    }
+
+    public static long getMaxUses(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return 0L;
+        return stack.hasNbt() ? stack.getNbt().getLong(KEY_MAX_USES) : 0L;
+    }
+
+    public static boolean isFullyUsed(ItemStack stack) {
+        long max = getMaxUses(stack);
+        if (max <= 0) return false; // no max set => never "fully used"
+        return getUseCount(stack) >= max;
     }
 
     // Zones
@@ -103,7 +140,7 @@ public class NormalTicketItem extends Item {
         return rem > 0 ? rem : 0;
     }
 
-    // Tooltip showing useful info
+    // Tooltip showing zones, class, validity and use counter (no used/unused status)
     @Override
     public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context) {
         String zones = getZones(stack);
@@ -111,13 +148,6 @@ public class NormalTicketItem extends Item {
 
         String travelClass = getTravelClass(stack);
         if (!travelClass.isEmpty()) tooltip.add(Text.literal("Class: " + travelClass));
-
-        // used tag optional: absence = unused
-        if (stack.hasNbt() && stack.getNbt().contains(KEY_USED)) {
-            tooltip.add(isUsed(stack) ? Text.literal("Status: Used") : Text.literal("Status: Unused"));
-        } else {
-            tooltip.add(Text.literal("Status: Unused"));
-        }
 
         long minutes = getValidityMinutes(stack);
         if (minutes > 0 && getPurchaseEpochSec(stack) > 0) {
@@ -129,6 +159,17 @@ public class NormalTicketItem extends Item {
             } else {
                 tooltip.add(Text.literal("Remaining: " + rem + " min"));
             }
+        }
+
+        // Use counter display
+        long uses = getUseCount(stack);
+        long max = getMaxUses(stack);
+        if (max > 0) {
+            long remainingUses = max - uses;
+            if (remainingUses < 0) remainingUses = 0;
+            tooltip.add(Text.literal("Uses: " + uses + " / " + max + " (remaining " + remainingUses + ")"));
+        } else {
+            tooltip.add(Text.literal("Uses: " + uses));
         }
     }
 }
