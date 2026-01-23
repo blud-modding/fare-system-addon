@@ -20,6 +20,7 @@ public class FareSystemAddon implements ModInitializer {
 		// Proceed with mild caution.
 
 		ItemRegistry.registerAll();
+		BlockRegistry.registerAll();
 		LOGGER.info("Hello Fabric world!");
 	}
 }
